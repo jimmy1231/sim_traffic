@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 
+#define LOADBMP_RGB 3
 /**
  * Initializes the world using the bitmap taken from 'input',
  * sets pre-determined values specified in 'config'.

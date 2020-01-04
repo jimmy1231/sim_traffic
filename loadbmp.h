@@ -31,7 +31,7 @@
 // Include loadbmp.h as following
 // to create the implementation file.
 //
-// #define LOADBMP_IMPLEMENTATION
+ #define LOADBMP_IMPLEMENTATION
 // #include "loadbmp.h"
 
 #ifndef SIM_TRAFFIC_LOADBMP_H
