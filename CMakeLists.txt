@@ -4,5 +4,5 @@ project(sim_traffic)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(sim_traffic
-        main.cc
-        Makefile)
+        sim.cc
+        Makefile load.h load.cc loadbmp.h)

@@ -1,8 +1,8 @@
 CXX = g++
 CXXFLAGS = -Wall -g
 
-OBJECTS1 = main.o
-EXEC1 = main
+OBJECTS1 = sim.o
+EXEC1 = sim
 
 OBJECTS = $(OBJECTS1)
 DEPENDS = $(OBJECTS:.o=.d)
@@ -22,4 +22,4 @@ $(EXEC1): $(OBJECTS1)
 #-include $(DEPENDS)
 
 clean:
-	rm -f *.d *.o main
+	rm -f *.d *.o sim
