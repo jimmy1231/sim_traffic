@@ -8,4 +8,3 @@ todo:
 - create agents/people, spawn points
 - decide on agent movement pattern
 - andre's shortestpath project can be a frontend!
-- 
