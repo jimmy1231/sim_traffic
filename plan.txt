@@ -1,0 +1,11 @@
+frontend that is given a config file and outputs a datastructure of world which the backend can start simulation from
+
+backend that is given the datastructure of world from frontend and starts simulation
+- 2 copies of world
+
+todo:
+- create the map
+- create agents/people, spawn points
+- decide on agent movement pattern
+- andre's shortestpath project can be a frontend!
+- 
