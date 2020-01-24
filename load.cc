@@ -11,17 +11,19 @@
 #include "world.h"
 
 using namespace std;
+
 /**
- * Writes frame_buffer to a file specified by output_file as a
- * PPM file. If number of channels is 3, then use P3 format, else
- * (if single channel - e.g. grayscale) use P2.
+ * Writes frame_buffer to a file specified by output_file as
+ * a PPM file. If number of channels is 3, then use P3 format
+ * else (if single channel - e.g. grayscale) use P2.
  *
  * See Wikipedia table:
  * https://en.wikipedia.org/wiki/Netpbm_format
  *
  * @param output_file
  * @param frame_buffer
- * @param width If frame_buffer were a NxM matrix, width would be M
+ * @param width If frame_buffer were a NxM matrix, width would
+ * be M
  * @param tl top right coordinates
  * @param br bottom right coordinates
  * @param channels number of channels (e.g. rgba=4, rgb=3)
