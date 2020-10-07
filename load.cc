@@ -78,7 +78,6 @@ discover(unsigned char *world, size_t height, size_t width,
 			if (world[frame_pos] == 0 &&
 				world[frame_pos+1] == 128 &&
 				world[frame_pos+2] == 0) {
-				printf("Found!\n");
 				found = true;
 				break;
 			}
@@ -179,12 +178,15 @@ load_world(char *input, FILE* config)
 	unsigned int width, height;
 
 	/* Load BMP file as bytes - each byte = 1 channel */
-	loadbmp_decode_file(input, &frame_buffer,
-		&width, &height, LOADBMP_RGB);
-#ifdef DEBUG
-	printf("Finished load into frame_buffer: %dx%d\n", width, height);
-	print_world_raw(frame_buffer, width, height);
-#endif
+	loadbmp_decode_file(
+	        input,
+	        &frame_buffer,
+	        &width,
+	        &height,
+	        LOADBMP_RGB);
+
+    printf("Finished load into frame_buffer: %dx%d\n", width, height);
+    assert(frame_buffer != nullptr);
 
 	vector<struct piece> V;
 	vector<struct edge> E;
@@ -194,7 +196,13 @@ load_world(char *input, FILE* config)
 	string filename = "discovered.ppm";
 	coords_t tl = make_tuple(0, 0);
 	coords_t br = make_tuple(height-1, width-1);
-	write_ppm(filename, frame_buffer,
-		(size_t)width, tl, br, (size_t)3);
+	write_ppm(
+	        filename,
+	        frame_buffer,
+	        (size_t)width,
+	        tl,
+	        br,
+	        (size_t)3);
+	std::cout << "Discovered file: " << filename << std::endl;
 #endif
 }
