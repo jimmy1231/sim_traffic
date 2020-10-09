@@ -64,6 +64,18 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	ofs.close();
 }
 
+/**
+ * This is more C-style, we are using structs. Since
+ * this is legacy, we will complete this portion of
+ * code, and transform the result into a C++, OOP
+ * style data structure afterwards.
+ *
+ * @param world
+ * @param height
+ * @param width
+ * @param V
+ * @param E
+ */
 void
 discover(unsigned char *world, size_t height, size_t width,
 	std::vector<struct piece> &V,
