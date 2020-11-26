@@ -77,16 +77,23 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
  * @param E
  */
 void
-discover(unsigned char *world, size_t height, size_t width,
+discover(unsigned char *original_world, size_t height, size_t width,
 	std::vector<struct piece> &V,
 	std::vector<struct edge> &E)
 {
+    auto world = (unsigned char *)malloc(height*width);
+    memcpy(original_world, world, height*width);
+
+    /*
+     * First, find the first tile that matches the color.
+     * (0,128,0) is green which is tunnel.
+     */
 	size_t frame_pos = 0, row, col;
 	bool found = false;
 	for (row=0; row<height; row++) {
 		for (col=0; col<width; col++, frame_pos+=3) {
 
-			/* Discover the first tile */
+			/* Discover the first tile *t/
 			if (world[frame_pos] == 0 &&
 				world[frame_pos+1] == 128 &&
 				world[frame_pos+2] == 0) {
@@ -181,6 +188,9 @@ discover(unsigned char *world, size_t height, size_t width,
 	write_ppm(filename, world,
 		(size_t)width, ul, br, (size_t)3);
 #endif
+
+	// "world" is just tmp
+	free(world);
 }
 
 void
