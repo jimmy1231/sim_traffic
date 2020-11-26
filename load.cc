@@ -93,7 +93,7 @@ discover(unsigned char *original_world, size_t height, size_t width,
 	for (row=0; row<height; row++) {
 		for (col=0; col<width; col++, frame_pos+=3) {
 
-			/* Discover the first tile *t/
+			/* Discover the first tile */
 			if (world[frame_pos] == 0 &&
 				world[frame_pos+1] == 128 &&
 				world[frame_pos+2] == 0) {
