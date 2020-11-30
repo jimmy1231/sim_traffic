@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <tuple>
 #include <memory>
+#include "rgb.h"
+#include "bitmap.h"
 
 /**
  * Prints the raw world - basically a parsed bitmap
@@ -14,14 +16,6 @@
  */
 void
 print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int height);
-
-struct piece {
-
-};
-
-struct edge {
-
-};
 
 typedef std::tuple<size_t, size_t> coords_t;
 typedef std::shared_ptr<coords_t> smart_coords_t;
@@ -35,5 +29,17 @@ typedef std::shared_ptr<coords_t> smart_coords_t;
 #define MAX(s1, s2) (s1) > (s2) ? (s1) : (s2)
 #define MIN(s1, s2) (s1) < (s2) ? (s1) : (s2)
 
+class world {
+    bitmap *bmp;
+public:
+    explicit world(bitmap *_bmp) : bmp{_bmp} { }
+    world(const world &w) : bmp{w.bmp->make_cpy()} { };
+    world(unsigned char *b, size_t h, size_t w)
+        : bmp{new bitmap(b, h, w)} { }
+    ~world();
+
+    world *make_cpy() const;
+    bitmap& get_bmp();
+};
 
 #endif //SIM_TRAFFIC_WORLD_H

@@ -1,5 +1,6 @@
 #include "world.h"
 #include <stdio.h>
+#include <string.h>
 
 void
 print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int height)
@@ -23,4 +24,17 @@ print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int he
 		printf("\n");
 	}
 	printf("======================================================\n");
+}
+
+world * world::make_cpy() const {
+    return new world(bmp->make_cpy());
+}
+
+bitmap &world::get_bmp() {
+    return *bmp;
+}
+
+world::~world() {
+    // destroy bitmap
+    bmp->~bitmap();
 }

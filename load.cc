@@ -9,8 +9,14 @@
 #include "loadbmp.h"
 #include "sim.h"
 #include "world.h"
+#include "bb.h"
+#include "tunnel.h"
+#include "rgb.h"
+#include "bitmap.h"
 
 using namespace std;
+
+rgb CLR_TUNNEL = rgb(0, 128, 0);
 
 /**
  * Writes frame_buffer to a file specified by output_file as
@@ -64,6 +70,134 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	ofs.close();
 }
 
+auto
+set_visited_curry(world &wrld, rgb &color)
+{
+    /*
+     * If the pixel specified by (row, col) matches the
+     * color given, then set the pixel as "visited",
+     * and return location of (row, col) in a tuple.
+     */
+    return [&wrld, &color]
+        (size_t row, size_t col) -> smart_coords_t
+    {
+        bitmap bmp = wrld.get_bmp();
+        size_t _pos = POS(row, col, bmp.width, bmp.height);
+        unsigned char *bitmap = wrld->bitmap;
+        if (MATCH(bitmap, _pos, color.r, color.g, color.b)) {
+            SET_VISITED(bitmap, _pos);
+            return make_shared<coords_t>(make_tuple(row, col));
+        }
+        return nullptr;
+    };
+}
+
+void
+recursive_discover()
+{
+    /*
+     *
+     */
+
+}
+
+bb *
+get_bb(world *wrld)
+{
+    size_t row_ul, col_ul, row_br, col_br;
+    row_ul = row_br = row;
+    col_ul = col_br = col;
+    while (!Q.empty()) {
+        _c = Q.front();
+        Q.pop();
+
+        _row = std::get<0>(*_c);
+        _col = std::get<1>(*_c);
+
+        /* Diagonal corners */
+        row_ul = MIN(_row, row_ul);
+        col_ul = MIN(_col, col_ul);
+        row_br = MAX(_row, row_br);
+        col_br = MAX(_col, col_br);
+
+        if (_row-1 >= 0) { // Up
+            _c = set_visited(_row-1, _col);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_row+1 < height) { // Down
+            _c = set_visited(_row+1, _col);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_col-1 >= 0) { // Left
+            _c = set_visited(_row, _col-1);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_col+1 < width) { // Right
+            _c = set_visited(_row, _col+1);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+    }
+    return nullptr;
+}
+
+tunnel *
+discover_tunnel(world &wrld, size_t row, size_t col)
+{
+    world wrld_cpy = world(wrld);
+    auto set_visited = set_visited_curry(wrld_cpy, CLR_TUNNEL);
+    queue<smart_coords_t> Q;
+    size_t _row, _col;
+    smart_coords_t _c = set_visited(row, col);
+    Q.push(_c);
+
+    bb *box = get_bb();
+    auto *t = new tunnel();
+    t->box = box;
+    t->bitmap = (unsigned char *)malloc(box->height() * box->width());
+
+    size_t row_ul, col_ul, row_br, col_br;
+    row_ul = row_br = row;
+    col_ul = col_br = col;
+    while (!Q.empty()) {
+        _c = Q.front();
+        Q.pop();
+
+        _row = std::get<0>(*_c);
+        _col = std::get<1>(*_c);
+
+        /* Diagonal corners */
+        row_ul = MIN(_row, row_ul);
+        col_ul = MIN(_col, col_ul);
+        row_br = MAX(_row, row_br);
+        col_br = MAX(_col, col_br);
+
+        if (_row-1 >= 0) { // Up
+            _c = set_visited(_row-1, _col);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_row+1 < wrld_cpy->height) { // Down
+            _c = set_visited(_row+1, _col);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_col-1 >= 0) { // Left
+            _c = set_visited(_row, _col-1);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+        if (_col+1 < wrld_cpy->width) { // Right
+            _c = set_visited(_row, _col+1);
+            if (_c != nullptr)
+                Q.push(_c);
+        }
+    }
+}
+
 /**
  * This is more C-style, we are using structs. Since
  * this is legacy, we will complete this portion of
@@ -77,12 +211,11 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
  * @param E
  */
 void
-discover(unsigned char *original_world, size_t height, size_t width,
-	std::vector<struct piece> &V,
-	std::vector<struct edge> &E)
+discover(world &wrld,
+         std::vector<struct piece> &V,
+         std::vector<struct edge> &E)
 {
-    auto world = (unsigned char *)malloc(height*width);
-    memcpy(original_world, world, height*width);
+    world wrld_cpy = world(wrld);
 
     /*
      * First, find the first tile that matches the color.
@@ -90,13 +223,14 @@ discover(unsigned char *original_world, size_t height, size_t width,
      */
 	size_t frame_pos = 0, row, col;
 	bool found = false;
-	for (row=0; row<height; row++) {
-		for (col=0; col<width; col++, frame_pos+=3) {
+	bitmap bmp = wrld_cpy.get_bmp();
+	for (row=0; row < bmp.height; row++) {
+		for (col=0; col < bmp.width; col++, frame_pos+=3) {
 
 			/* Discover the first tile */
-			if (world[frame_pos] == 0 &&
-				world[frame_pos+1] == 128 &&
-				world[frame_pos+2] == 0) {
+			if (bmp[frame_pos] == CLR_TUNNEL.r &&
+                bmp[frame_pos+1] == CLR_TUNNEL.g &&
+                bmp[frame_pos+2] == CLR_TUNNEL.b) {
 				found = true;
 				break;
 			}
@@ -115,75 +249,19 @@ discover(unsigned char *original_world, size_t height, size_t width,
 
 	/*
 	 * Breadth-first discovery of first tunnel. Afterwards,
-	 * use this tunnel as the epicenter for breadth-first
-	 * exhaustive discovery of the entire world.
+	 * use this tunnel as the starting point for breadth
+	 * first discovery of the entire world.
 	 *
 	 * Find the diagonal corners:
 	 * Upper-left	: row_ul, col_ul
 	 * Bottom-right	: row_br, col_br
 	 */
-	queue<smart_coords_t> Q;
-	SET_VISITED(world, frame_pos);
-	Q.push(make_shared<coords_t>(make_tuple(row, col)));
+	tunnel *first_tunnel = discover_tunnel(wrld_cpy, row, col);
 
-	auto set_visited = [&width, &height, &world]
-		(size_t row, size_t col) -> smart_coords_t
-	{
-		size_t _pos = POS(row, col, width, height);
-		if (MATCH(world, _pos, 0, 128, 0)) {
-			SET_VISITED(world, _pos);
-			return make_shared<coords_t>(make_tuple(row, col));
-		}
-		return nullptr;
-	};
-
-	smart_coords_t _c;
-	size_t _row, _col;
-
-	size_t row_ul, col_ul, row_br, col_br;
-	row_ul = row_br = row;
-	col_ul = col_br = col;
-	while (!Q.empty()) {
-		_c = Q.front();
-		Q.pop();
-
-		_row = std::get<0>(*_c);
-		_col = std::get<1>(*_c);
-
-		/* Diagonal corners */
-		row_ul = MIN(_row, row_ul);
-		col_ul = MIN(_col, col_ul);
-		row_br = MAX(_row, row_br);
-		col_br = MAX(_col, col_br);
-
-		if (_row-1 >= 0) { // Up
-			_c = set_visited(_row-1, _col);
-			if (_c != nullptr)
-				Q.push(_c);
-		}
-		if (_row+1 < height) { // Down
-			_c = set_visited(_row+1, _col);
-			if (_c != nullptr)
-				Q.push(_c);
-		}
-		if (_col-1 >= 0) { // Left
-			_c = set_visited(_row, _col-1);
-			if (_c != nullptr)
-				Q.push(_c);
-		}
-		if (_col+1 < width) { // Right
-			_c = set_visited(_row, _col+1);
-			if (_c != nullptr)
-				Q.push(_c);
-		}
-	}
-
-	coords_t ul = make_tuple(row_ul, col_ul);
-	coords_t br = make_tuple(row_br, col_br);
+	coords_t ul = make_tuple(first_tunnel->box->row_ul, first_tunnel->box->col_ul);
+	coords_t br = make_tuple(first_tunnel->box->row_br, first_tunnel->box->col_br);
+	first_tunnel->box->print();
 #ifdef DEBUG
-	printf("UpLeft: (%d, %d); BottomRight: (%d, %d)\n",
-		   (int)row_ul, (int)col_ul,
-		   (int)row_br, (int)col_br);
 	string filename = "tunnel.ppm";
 	write_ppm(filename, world,
 		(size_t)width, ul, br, (size_t)3);
@@ -212,7 +290,9 @@ load_world(char *input, FILE* config)
 
 	vector<struct piece> V;
 	vector<struct edge> E;
-	discover(frame_buffer, (size_t)height, (size_t)width, V, E);
+
+	auto *wrld = new world(frame_buffer, (size_t)height, (size_t)width);
+	discover(wrld, V, E);
 
 #ifdef DEBUG
 	string filename = "discovered.ppm";
