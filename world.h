@@ -20,6 +20,7 @@ print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int he
 typedef std::tuple<size_t, size_t> coords_t;
 typedef std::shared_ptr<coords_t> smart_coords_t;
 
+#define NULL_COORD coords_t(-1, -1)
 #define POS(row, col, w, h) ((row)*(w) + (col))*3
 #define SET_VISITED(frame, i) frame[i] = 112; \
 	frame[i+1] = 16; \

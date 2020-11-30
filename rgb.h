@@ -12,6 +12,9 @@ public:
     rgb(unsigned char r, unsigned char g, unsigned char b)
         : r{r}, g{g}, b{b}
         { }
+
+    bool operator==(const rgb &other) const;
+    rgb &operator=(const rgb &other);
 };
 
 
