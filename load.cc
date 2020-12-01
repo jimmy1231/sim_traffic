@@ -13,10 +13,11 @@
 #include "tunnel.h"
 #include "rgb.h"
 #include "bitmap.h"
+#include "dbitmap.h"
 
 using namespace std;
 
-rgb CLR_TUNNEL = rgb(0, 128, 0);
+const rgb CLR_TUNNEL = rgb(0, 128, 0);
 
 /**
  * Writes frame_buffer to a file specified by output_file as
@@ -147,11 +148,9 @@ get_bb(world *wrld)
 tunnel *
 discover_tunnel(world &wrld, size_t row, size_t col)
 {
-    world wrld_cpy = world(wrld);
-    auto set_visited = set_visited_curry(wrld_cpy, CLR_TUNNEL);
-    queue<smart_coords_t> Q;
+    queue<coords_t> Q;
     size_t _row, _col;
-    smart_coords_t _c = set_visited(row, col);
+    coords_t _c = get_coords(row, col);
     Q.push(_c);
 
     bb *box = get_bb();
@@ -215,15 +214,13 @@ discover(world &wrld,
          std::vector<struct piece> &V,
          std::vector<struct edge> &E)
 {
-    world wrld_cpy = world(wrld);
-
     /*
      * First, find the first tile that matches the color.
      * (0,128,0) is green which is tunnel.
      */
 	size_t frame_pos = 0, row, col;
 	bool found = false;
-	bitmap bmp = wrld_cpy.get_bmp();
+	bitmap &bmp = wrld.get_bmp();
 	for (row=0; row < bmp.height; row++) {
 		for (col=0; col < bmp.width; col++, frame_pos+=3) {
 
@@ -256,19 +253,16 @@ discover(world &wrld,
 	 * Upper-left	: row_ul, col_ul
 	 * Bottom-right	: row_br, col_br
 	 */
-	tunnel *first_tunnel = discover_tunnel(wrld_cpy, row, col);
+	tunnel *first_tunnel = discover_tunnel(wrld, row, col);
 
 	coords_t ul = make_tuple(first_tunnel->box->row_ul, first_tunnel->box->col_ul);
 	coords_t br = make_tuple(first_tunnel->box->row_br, first_tunnel->box->col_br);
 	first_tunnel->box->print();
 #ifdef DEBUG
 	string filename = "tunnel.ppm";
-	write_ppm(filename, world,
-		(size_t)width, ul, br, (size_t)3);
+	write_ppm(filename, wrld.get_bmp().buffer,
+		(size_t)wrld.get_bmp().width, ul, br, (size_t)3);
 #endif
-
-	// "world" is just tmp
-	free(world);
 }
 
 void

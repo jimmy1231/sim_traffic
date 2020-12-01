@@ -6,6 +6,7 @@
 #include <memory>
 #include "rgb.h"
 #include "bitmap.h"
+#include "dbitmap.h"
 
 /**
  * Prints the raw world - basically a parsed bitmap
@@ -30,17 +31,22 @@ typedef std::shared_ptr<coords_t> smart_coords_t;
 #define MAX(s1, s2) (s1) > (s2) ? (s1) : (s2)
 #define MIN(s1, s2) (s1) < (s2) ? (s1) : (s2)
 
+inline coords_t get_coords(size_t row, size_t col) {
+    return std::make_tuple(row, col);
+}
+
 class world {
-    bitmap *bmp;
+    dbitmap *dbmp;
 public:
-    explicit world(bitmap *_bmp) : bmp{_bmp} { }
-    world(const world &w) : bmp{w.bmp->make_cpy()} { };
+    explicit world(bitmap *_bmp) : dbmp{_bmp} { }
+    world(const world &w) : dbmp{new bitmap(bmp)} { };
     world(unsigned char *b, size_t h, size_t w)
-        : bmp{new bitmap(b, h, w)} { }
+        : dbmp{new bitmap(b, h, w)} { }
     ~world();
 
     world *make_cpy() const;
-    bitmap& get_bmp();
+    bitmap &get_bmp();
+    dbitmap &get_dbmp();
 };
 
 #endif //SIM_TRAFFIC_WORLD_H

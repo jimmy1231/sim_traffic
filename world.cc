@@ -27,14 +27,18 @@ print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int he
 }
 
 world * world::make_cpy() const {
-    return new world(bmp->make_cpy());
+    return new world(dbmp->make_cpy());
 }
 
 bitmap &world::get_bmp() {
-    return *bmp;
+    return *dbmp;
 }
 
 world::~world() {
     // destroy bitmap
-    bmp->~bitmap();
+    delete dbmp;
+}
+
+dbitmap &world::get_dbmp() {
+    return *dbmp;
 }

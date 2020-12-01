@@ -26,12 +26,21 @@ bitmap::~bitmap() {
 }
 
 rgb &bitmap::get(const coords_t &coords) {
-    size_t pos = (std::get<0>(coords) * width + std::get<1>(col)) * 3;
+    size_t pos = (std::get<0>(coords) * width + std::get<1>(coords)) * 3;
     rgb *pixel = (rgb *) &(*this)[pos];
     return (*pixel);
 }
 
-void bitmap::set(rgb color, size_t row, size_t col) {
-    rgb pixel = get(row, col);
+void bitmap::set(rgb &color, coords_t &coords) {
+    rgb &pixel = get(coords);
     pixel = color;
+}
+
+bitmap::bitmap(const bitmap &other) {
+    height = other.height;
+    width = other.width;
+
+    size_t nbytes = width * height;
+    buffer = (unsigned char *)malloc(nbytes);
+    memcpy(buffer, other.buffer, nbytes);
 }

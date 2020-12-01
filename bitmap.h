@@ -17,6 +17,11 @@ public:
     size_t width;
 
     ~bitmap();
+    bitmap(bitmap &&other) :
+        buffer{other.buffer},
+        height{other.height},
+        width{other.width} { };
+    bitmap(const bitmap &other);
     bitmap(unsigned char *b, size_t h, size_t w)
         : buffer{b}, height{h}, width{w} { }
 
@@ -26,7 +31,7 @@ public:
      * buffer location of 'row' and 'col'.
      */
     rgb &get(const coords_t &coords);
-    void set(rgb color, size_t row, size_t col);
+    void set(rgb &color, coords_t &coords);
     unsigned char& operator[](int index);
     unsigned char& operator[](size_t index);
 };
