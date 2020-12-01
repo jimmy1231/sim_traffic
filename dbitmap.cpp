@@ -7,9 +7,9 @@
 #include <memory>
 #include "dbitmap.h"
 #include "rgb.h"
-#include "world.h"
+#include "prog.h"
 
-bool dbitmap::set_visited(int id, rgb &color, const coords_t &&coords) {
+bool dbitmap::set_visited(int id, rgb &color, const coords_t &coords) {
     rgb pixel = this->get(coords);
     if (pixel == color) {
         track_pixel(id, pixel, coords);

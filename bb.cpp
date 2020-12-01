@@ -18,3 +18,19 @@ size_t bb::height() const {
 size_t bb::width() const {
     return col_br - col_ul;
 }
+
+bb &bb::operator=(const bb &other) {
+    row_ul = other.row_ul;
+    col_ul = other.col_ul;
+    row_br = other.row_br;
+    col_br = other.col_br;
+    return (*this);
+}
+
+coords_t bb::top_left() const {
+    return get_coords(row_ul, col_ul);
+}
+
+coords_t bb::bot_right() const {
+    return get_coords(row_br, col_br);
+}

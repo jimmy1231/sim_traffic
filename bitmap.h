@@ -7,8 +7,8 @@
 
 
 #include <cstddef>
+#include "prog.h"
 #include "rgb.h"
-#include "world.h"
 
 class bitmap {
 public:
@@ -17,7 +17,7 @@ public:
     size_t width;
 
     ~bitmap();
-    bitmap(bitmap &&other) :
+    bitmap(bitmap &&other)  noexcept :
         buffer{other.buffer},
         height{other.height},
         width{other.width} { };

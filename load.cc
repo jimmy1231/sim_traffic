@@ -1,11 +1,12 @@
 #include "load.h"
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
-#include <assert.h>
+#include <cassert>
 #include <vector>
 #include <memory>
 #include <queue>
+#include "prog.h"
 #include "loadbmp.h"
 #include "sim.h"
 #include "world.h"
@@ -17,7 +18,7 @@
 
 using namespace std;
 
-const rgb CLR_TUNNEL = rgb(0, 128, 0);
+rgb CLR_TUNNEL = rgb(0, 128, 0);
 
 /**
  * Writes frame_buffer to a file specified by output_file as
@@ -71,28 +72,6 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	ofs.close();
 }
 
-auto
-set_visited_curry(world &wrld, rgb &color)
-{
-    /*
-     * If the pixel specified by (row, col) matches the
-     * color given, then set the pixel as "visited",
-     * and return location of (row, col) in a tuple.
-     */
-    return [&wrld, &color]
-        (size_t row, size_t col) -> smart_coords_t
-    {
-        bitmap bmp = wrld.get_bmp();
-        size_t _pos = POS(row, col, bmp.width, bmp.height);
-        unsigned char *bitmap = wrld->bitmap;
-        if (MATCH(bitmap, _pos, color.r, color.g, color.b)) {
-            SET_VISITED(bitmap, _pos);
-            return make_shared<coords_t>(make_tuple(row, col));
-        }
-        return nullptr;
-    };
-}
-
 void
 recursive_discover()
 {
@@ -102,18 +81,21 @@ recursive_discover()
 
 }
 
-bb *
-get_bb(world *wrld)
+bb get_bb(world &wrld, coords_t coords)
 {
+    queue<coords_t> Q;
     size_t row_ul, col_ul, row_br, col_br;
-    row_ul = row_br = row;
-    col_ul = col_br = col;
+    row_ul = row_br = get_row(coords);
+    col_ul = col_br = get_col(coords);
+
+    dbitmap &dbmp = wrld.get_dbmp();
+    int mark_id = dbmp.mark();
     while (!Q.empty()) {
-        _c = Q.front();
+        coords_t _c = Q.front();
         Q.pop();
 
-        _row = std::get<0>(*_c);
-        _col = std::get<1>(*_c);
+        size_t _row = get_row(_c);
+        size_t _col = get_col(_c);
 
         /* Diagonal corners */
         row_ul = MIN(_row, row_ul);
@@ -122,51 +104,51 @@ get_bb(world *wrld)
         col_br = MAX(_col, col_br);
 
         if (_row-1 >= 0) { // Up
-            _c = set_visited(_row-1, _col);
-            if (_c != nullptr)
+            _c = get_coords(_row-1, _col);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
-        if (_row+1 < height) { // Down
-            _c = set_visited(_row+1, _col);
-            if (_c != nullptr)
+        if (_row+1 < dbmp.height) { // Down
+            _c = get_coords(_row+1, _col);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
         if (_col-1 >= 0) { // Left
-            _c = set_visited(_row, _col-1);
-            if (_c != nullptr)
+            _c = get_coords(_row, _col-1);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
-        if (_col+1 < width) { // Right
-            _c = set_visited(_row, _col+1);
-            if (_c != nullptr)
+        if (_col+1 < dbmp.width) { // Right
+            _c = get_coords(_row, _col+1);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
     }
-    return nullptr;
+
+    dbmp.reset(mark_id);
+    return {row_ul, col_ul, row_br, col_br};
 }
 
-tunnel *
-discover_tunnel(world &wrld, size_t row, size_t col)
+tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
 {
     queue<coords_t> Q;
-    size_t _row, _col;
     coords_t _c = get_coords(row, col);
     Q.push(_c);
 
-    bb *box = get_bb();
-    auto *t = new tunnel();
-    t->box = box;
-    t->bitmap = (unsigned char *)malloc(box->height() * box->width());
-
+    auto *t = new tunnel(get_bb(wrld, _c));
     size_t row_ul, col_ul, row_br, col_br;
     row_ul = row_br = row;
     col_ul = col_br = col;
+
+    dbitmap &dbmp = wrld.get_dbmp();
+    int mark_id = dbmp.mark();
     while (!Q.empty()) {
         _c = Q.front();
         Q.pop();
+        t->dbmp.set(CLR_TUNNEL, _c);
 
-        _row = std::get<0>(*_c);
-        _col = std::get<1>(*_c);
+        size_t _row = get_row(_c);
+        size_t _col = get_col(_c);
 
         /* Diagonal corners */
         row_ul = MIN(_row, row_ul);
@@ -175,26 +157,28 @@ discover_tunnel(world &wrld, size_t row, size_t col)
         col_br = MAX(_col, col_br);
 
         if (_row-1 >= 0) { // Up
-            _c = set_visited(_row-1, _col);
-            if (_c != nullptr)
+            _c = get_coords(_row-1, _col);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
-        if (_row+1 < wrld_cpy->height) { // Down
-            _c = set_visited(_row+1, _col);
-            if (_c != nullptr)
+        if (_row+1 < dbmp.height) { // Down
+            _c = get_coords(_row+1, _col);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
         if (_col-1 >= 0) { // Left
-            _c = set_visited(_row, _col-1);
-            if (_c != nullptr)
+            _c = get_coords(_row, _col-1);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
-        if (_col+1 < wrld_cpy->width) { // Right
-            _c = set_visited(_row, _col+1);
-            if (_c != nullptr)
+        if (_col+1 < dbmp.width) { // Right
+            _c = get_coords(_row, _col+1);
+            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
                 Q.push(_c);
         }
     }
+
+    return t;
 }
 
 /**
@@ -209,10 +193,7 @@ discover_tunnel(world &wrld, size_t row, size_t col)
  * @param V
  * @param E
  */
-void
-discover(world &wrld,
-         std::vector<struct piece> &V,
-         std::vector<struct edge> &E)
+void discover(world &wrld)
 {
     /*
      * First, find the first tile that matches the color.
@@ -255,13 +236,19 @@ discover(world &wrld,
 	 */
 	tunnel *first_tunnel = discover_tunnel(wrld, row, col);
 
-	coords_t ul = make_tuple(first_tunnel->box->row_ul, first_tunnel->box->col_ul);
-	coords_t br = make_tuple(first_tunnel->box->row_br, first_tunnel->box->col_br);
-	first_tunnel->box->print();
 #ifdef DEBUG
+    first_tunnel->box.print();
 	string filename = "tunnel.ppm";
-	write_ppm(filename, wrld.get_bmp().buffer,
-		(size_t)wrld.get_bmp().width, ul, br, (size_t)3);
+	coords_t tl = get_coords(0,0);
+    coords_t br = get_coords(first_tunnel->box.width()-1, first_tunnel->box.height()-1);
+	write_ppm(
+	        filename,
+	        first_tunnel->dbmp.buffer,
+	        (size_t)first_tunnel->box.width(),
+	        tl,
+	        br,
+	        (size_t)3
+        );
 #endif
 }
 
@@ -282,11 +269,8 @@ load_world(char *input, FILE* config)
     printf("Finished load into frame_buffer: %dx%d\n", width, height);
     assert(frame_buffer != nullptr);
 
-	vector<struct piece> V;
-	vector<struct edge> E;
-
 	auto *wrld = new world(frame_buffer, (size_t)height, (size_t)width);
-	discover(wrld, V, E);
+	discover(*wrld);
 
 #ifdef DEBUG
 	string filename = "discovered.ppm";

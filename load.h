@@ -1,7 +1,7 @@
 #ifndef SIM_TRAFFIC_LOAD_H
 #define SIM_TRAFFIC_LOAD_H
 
-#include <stdio.h>
+#include <cstdio>
 
 #define LOADBMP_RGB 3
 /**
