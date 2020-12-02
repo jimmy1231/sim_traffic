@@ -169,7 +169,7 @@ tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
         _c = Q.front();
         Q.pop();
         coords_t relative_coords = sim::relativize(t->box, _c);
-        t->dbmp.set(CLR_TUNNEL, relative_coords);
+        t->dbmp[relative_coords] = CLR_TUNNEL;
 
         size_t _row = _c.row;
         size_t _col = _c.col;

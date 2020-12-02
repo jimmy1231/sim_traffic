@@ -5,57 +5,49 @@
 #include <cstdio>
 #include <iostream>
 #include <tuple>
+#include <cassert>
 #include "dbitmap.h"
 #include "rgb.h"
 #include "prog.h"
 
 int dbitmap::mark() {
-    auto it = dbit_cache.begin();
-    for (int i = 0; it != dbit_cache.end(); ++it, ++i) {
+    auto it = dirty_cache.begin();
+    for (int i = 0; it != dirty_cache.end(); ++it, ++i) {
         if ((*it).empty()) {
             return i;
         }
     }
 
-    dbit_cache.emplace_back(gridmap());
-    int id = (int)dbit_cache.size() - 1;
+    dirty_cache.emplace_back(dbit_cache());
+    int id = (int)dirty_cache.size() - 1;
     return id;
 }
 
 void dbitmap::reset(int id) {
-    if (id < dbit_cache.size()) {
-        gridmap &map = dbit_cache[id];
+    if (id < dirty_cache.size()) {
+        dbit_cache &stack_cache = dirty_cache[id];
 
-        for (auto &it : map) {
-            std::string key = it.first;
-            rgb color = it.second;
+        while (!stack_cache.empty()) {
+            auto pair = stack_cache.top();
+            set(pair.second, pair.first);
 
-            int pos = key.find('-');
-            size_t row = std::stoi(key.substr(0, pos));
-            size_t col = std::stoi(key.substr(pos+1));
-
-            coords_t coords(row, col);
-            set(color, coords);
+            stack_cache.pop();
         }
 
-        map.clear();
+        // just to make sure
+        assert(stack_cache.empty());
     }
 }
 
 dbitmap::~dbitmap() {
-    if (!dbit_cache.empty()) {
-        dbit_cache.clear();
+    if (!dirty_cache.empty()) {
+        dirty_cache.clear();
     }
 }
 
 void dbitmap::save(int id, rgb &color, const coords_t &coords) {
-    if (id < dbit_cache.size()) {
-        gridmap &cache = dbit_cache[id];
-
-        size_t row = coords.row;
-        size_t col = coords.col;
-        std::string key = std::to_string(row) + "-" + std::to_string(col);
-
-        cache[key] = color;
+    if (id < dirty_cache.size()) {
+        dbit_cache &cache = dirty_cache[id];
+        cache.push(std::make_pair(coords, color));
     }
 }

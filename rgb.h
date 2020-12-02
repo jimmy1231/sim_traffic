@@ -10,6 +10,8 @@ class rgb {
 public:
     unsigned char r, g, b;
     rgb() = default;
+    rgb(const rgb &other) = default;
+    rgb(rgb &&other) = default;
     rgb(unsigned char r, unsigned char g, unsigned char b)
         : r{r}, g{g}, b{b}
         { }
