@@ -45,8 +45,6 @@ namespace sim {
             MAX(get_row(coords)-box.row_ul, 0),
             MAX(get_col(coords)-box.col_ul, 0)
         );
-//        box.print();
-//        std::cout << "coords=(" << get_row(coords) << "," << get_col(coords) << ")" << std::endl;
         return _c;
     }
 }

@@ -29,8 +29,6 @@ bitmap::~bitmap() {
 rgb &bitmap::get(const coords_t &coords) {
     size_t pos = (get_row(coords) * width + get_col(coords)) * 3;
     rgb *pixel = (rgb *) &(*this)[pos];
-//    std::cout << "get &buffer[" << pos << "] = " << pixel << ", &(coords) - (" << get_row(coords) << "," << get_col(coords) << "). "
-//        << pixel << ". rgb=(" << (int)pixel->r << "," << (int)pixel->g << "," << (int)pixel->b << ")" << std::endl;
     return (*pixel);
 }
 

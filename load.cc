@@ -149,21 +149,10 @@ tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
 
     dbitmap &dbmp = wrld.get_dbmp();
     int mark_id = dbmp.mark();
-//    auto tmp_buf = (unsigned char *)malloc(wrld.get_bmp().nbytes);
-//    memset(tmp_buf, 255, wrld.get_dbmp().nbytes);
-//    t->dbmp.buffer = tmp_buf;
-//    t->dbmp.height = wrld.get_bmp().height;
-//    t->dbmp.width = wrld.get_bmp().width;
-//    t->dbmp.nbytes = wrld.get_bmp().nbytes;
-//    t->box = bb(0, 0, wrld.get_bmp().height, wrld.get_bmp().width);
     while (!Q.empty()) {
         _c = Q.front();
         Q.pop();
         coords_t relative_coords = sim::relativize(t->box, _c);
-        std::cout
-            << "(" << get_row(_c) << "," << get_col(_c) << ")"
-            << " -> (" << get_row(relative_coords) << "," << get_col(relative_coords) << ")"
-            << std::endl;
         t->dbmp.set(CLR_TUNNEL, relative_coords);
 
         size_t _row = get_row(_c);
@@ -255,9 +244,8 @@ void discover(world &wrld)
 	bb &box = first_tunnel->box;
 	box.print();
 	string filename = "tunnel.ppm";
-	coords_t tl = sim::relativize(box, box.top_left());
-    coords_t br = sim::relativize(box, box.bot_right());
-//    print_bmp(first_tunnel->dbmp.buffer, box.width(), box.height());
+	coords_t tl = get_coords(0, 0);
+    coords_t br = get_coords(box.height()-1, box.width()-1);
 	write_ppm(
 	        filename,
 	        first_tunnel->dbmp.buffer,
