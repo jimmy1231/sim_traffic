@@ -34,3 +34,7 @@ coords_t bb::top_left() const {
 coords_t bb::bot_right() const {
     return get_coords(row_br, col_br);
 }
+
+size_t bb::size() const {
+    return height() * width();
+}

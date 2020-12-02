@@ -18,7 +18,7 @@ public:
 
     explicit tunnel(bb &&b) :
         box{b},
-        dbmp{(unsigned char *)malloc(b.height()*b.width()*3), b.height(), b.width()} { }
+        dbmp{b.height(), b.width()} { }
 };
 
 

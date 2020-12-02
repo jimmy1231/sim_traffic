@@ -86,9 +86,9 @@ LOADBMP_API unsigned int loadbmp_encode_file(
 #	pragma warning(disable: 4996)
 #endif
 
-#include <stdlib.h> /* malloc(), free() */
-#include <string.h> /* memset(), memcpy() */
-#include <stdio.h> /* fopen(), fwrite(), fread(), fclose() */
+#include <cstdlib> /* malloc(), free() */
+#include <cstring> /* memset(), memcpy() */
+#include <cstdio> /* fopen(), fwrite(), fread(), fclose() */
 
 
 LOADBMP_API unsigned int loadbmp_decode_file(

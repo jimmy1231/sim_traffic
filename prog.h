@@ -8,6 +8,12 @@
 #include <cstdio>
 #include <tuple>
 #include <memory>
+#include "rgb.h"
+
+extern rgb CLR_TUNNEL;
+extern rgb CLR_WHITE;
+extern rgb CLR_BLACK;
+extern rgb CLR_DISCOVERY_VISITED;
 
 typedef std::tuple<size_t, size_t> coords_t;
 typedef std::shared_ptr<coords_t> smart_coords_t;
@@ -31,6 +37,14 @@ inline size_t get_row(coords_t &coords) {
 }
 
 inline size_t get_col(coords_t &coords) {
+    return std::get<1>(coords);
+}
+
+inline size_t get_row(const coords_t &coords) {
+    return std::get<0>(coords);
+}
+
+inline size_t get_col(const coords_t &coords) {
     return std::get<1>(coords);
 }
 

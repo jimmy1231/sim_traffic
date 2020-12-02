@@ -4,20 +4,21 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <iostream>
+#include <cassert>
 #include "bitmap.h"
 
 bitmap *bitmap::make_cpy() const {
-    size_t nbytes = width *height;
     auto *buf = (unsigned char *)malloc(nbytes);
     memcpy(buf, buffer, nbytes);
     return new bitmap(buf, height, width);
 }
 
-unsigned char &bitmap::operator[](int index) {
+unsigned char &bitmap::operator[](int index) const {
     return buffer[index];
 }
 
-unsigned char &bitmap::operator[](size_t index) {
+unsigned char &bitmap::operator[](size_t index) const {
     return buffer[index];
 }
 
@@ -26,12 +27,27 @@ bitmap::~bitmap() {
 }
 
 rgb &bitmap::get(const coords_t &coords) {
-    size_t pos = (std::get<0>(coords) * width + std::get<1>(coords)) * 3;
+    size_t pos = (get_row(coords) * width + get_col(coords)) * 3;
     rgb *pixel = (rgb *) &(*this)[pos];
+//    std::cout << "get &buffer[" << pos << "] = " << pixel << ", &(coords) - (" << get_row(coords) << "," << get_col(coords) << "). "
+//        << pixel << ". rgb=(" << (int)pixel->r << "," << (int)pixel->g << "," << (int)pixel->b << ")" << std::endl;
     return (*pixel);
 }
 
 void bitmap::set(rgb &color, coords_t &coords) {
+    rgb &pixel = get(coords);
+
+    // boundary check
+    if ((void *) (&pixel + 1 /* sizeof(rgb) */) > (void *) (buffer + nbytes)) {
+        size_t pos = (std::get<0>(coords) * width + std::get<1>(coords)) * 3;
+        std::cout << "set &buffer[" << pos << "] = " << &pixel << ", &(coords) - (" << get_row(coords) << "," << get_col(coords) << "). "
+                  << &pixel << ". rgb=(" << (int)color.r << "," << (int)color.g << "," << (int)color.b << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    pixel = color;
+}
+
+void bitmap::set(rgb &&color, coords_t &coords) {
     rgb &pixel = get(coords);
     pixel = color;
 }
@@ -39,8 +55,8 @@ void bitmap::set(rgb &color, coords_t &coords) {
 bitmap::bitmap(const bitmap &other) {
     height = other.height;
     width = other.width;
+    nbytes = width * height;
 
-    size_t nbytes = width * height;
     buffer = (unsigned char *)malloc(nbytes);
     memcpy(buffer, other.buffer, nbytes);
 }

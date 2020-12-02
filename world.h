@@ -16,8 +16,8 @@
  * @param width
  * @param height
  */
-void
-print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int height);
+void print_world_raw(unsigned char* frame_buffer, unsigned int width, unsigned int height);
+void print_bmp(unsigned char* frame_buffer, unsigned int width, unsigned int height);
 
 class world {
     dbitmap dbmp;

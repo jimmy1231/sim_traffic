@@ -12,4 +12,10 @@ rgb &rgb::operator=(const rgb &other) {
     r = other.r;
     g = other.g;
     b = other.b;
+
+    return (*this);
+}
+
+unsigned char rgb::average() const {
+    return (unsigned char) ((float)r + (float)g + (float)b / 3);
 }

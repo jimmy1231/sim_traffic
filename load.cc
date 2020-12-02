@@ -1,4 +1,3 @@
-#include "load.h"
 #include <cstdio>
 #include <iostream>
 #include <fstream>
@@ -6,6 +5,8 @@
 #include <vector>
 #include <memory>
 #include <queue>
+
+#include "load.h"
 #include "prog.h"
 #include "loadbmp.h"
 #include "sim.h"
@@ -17,8 +18,6 @@
 #include "dbitmap.h"
 
 using namespace std;
-
-rgb CLR_TUNNEL = rgb(0, 128, 0);
 
 /**
  * Writes frame_buffer to a file specified by output_file as
@@ -42,6 +41,10 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	coords_t &tl, coords_t &br,
 	size_t channels)
 {
+    std::cout << "writing to: " << output_file
+        << ", tl=(" << get_row(tl) << "," << get_col(tl) << "), "
+        << "br=("<< get_row(br) << "," << get_col(br) << "), "
+        << std::endl;
 	assert(channels == 1 || channels == 3);
 
 	std::ofstream ofs;
@@ -84,6 +87,8 @@ recursive_discover()
 bb get_bb(world &wrld, coords_t coords)
 {
     queue<coords_t> Q;
+    Q.push(coords);
+
     size_t row_ul, col_ul, row_br, col_br;
     row_ul = row_br = get_row(coords);
     col_ul = col_br = get_col(coords);
@@ -126,7 +131,7 @@ bb get_bb(world &wrld, coords_t coords)
     }
 
     dbmp.reset(mark_id);
-    return {row_ul, col_ul, row_br, col_br};
+    return {row_ul, col_ul, row_br+1, col_br+1};
 }
 
 tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
@@ -136,25 +141,33 @@ tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
     Q.push(_c);
 
     auto *t = new tunnel(get_bb(wrld, _c));
-    size_t row_ul, col_ul, row_br, col_br;
-    row_ul = row_br = row;
-    col_ul = col_br = col;
+    std::cout << "discover tunnel"
+        << ". bb_height=" << t->box.height()
+        << ", bb_width=" << t->box.width()
+        << ", nbytes=" << t->dbmp.nbytes
+        << std::endl;
 
     dbitmap &dbmp = wrld.get_dbmp();
     int mark_id = dbmp.mark();
+//    auto tmp_buf = (unsigned char *)malloc(wrld.get_bmp().nbytes);
+//    memset(tmp_buf, 255, wrld.get_dbmp().nbytes);
+//    t->dbmp.buffer = tmp_buf;
+//    t->dbmp.height = wrld.get_bmp().height;
+//    t->dbmp.width = wrld.get_bmp().width;
+//    t->dbmp.nbytes = wrld.get_bmp().nbytes;
+//    t->box = bb(0, 0, wrld.get_bmp().height, wrld.get_bmp().width);
     while (!Q.empty()) {
         _c = Q.front();
         Q.pop();
-        t->dbmp.set(CLR_TUNNEL, _c);
+        coords_t relative_coords = sim::relativize(t->box, _c);
+        std::cout
+            << "(" << get_row(_c) << "," << get_col(_c) << ")"
+            << " -> (" << get_row(relative_coords) << "," << get_col(relative_coords) << ")"
+            << std::endl;
+        t->dbmp.set(CLR_TUNNEL, relative_coords);
 
         size_t _row = get_row(_c);
         size_t _col = get_col(_c);
-
-        /* Diagonal corners */
-        row_ul = MIN(_row, row_ul);
-        col_ul = MIN(_col, col_ul);
-        row_br = MAX(_row, row_br);
-        col_br = MAX(_col, col_br);
 
         if (_row-1 >= 0) { // Up
             _c = get_coords(_row-1, _col);
@@ -178,6 +191,7 @@ tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
         }
     }
 
+    dbmp.reset(mark_id);
     return t;
 }
 
@@ -234,13 +248,16 @@ void discover(world &wrld)
 	 * Upper-left	: row_ul, col_ul
 	 * Bottom-right	: row_br, col_br
 	 */
+	std::cout << "first tunnel starts: (" << row << "," << col << ")" << std::endl;
 	tunnel *first_tunnel = discover_tunnel(wrld, row, col);
 
 #ifdef DEBUG
-    first_tunnel->box.print();
+	bb &box = first_tunnel->box;
+	box.print();
 	string filename = "tunnel.ppm";
-	coords_t tl = get_coords(0,0);
-    coords_t br = get_coords(first_tunnel->box.width()-1, first_tunnel->box.height()-1);
+	coords_t tl = sim::relativize(box, box.top_left());
+    coords_t br = sim::relativize(box, box.bot_right());
+//    print_bmp(first_tunnel->dbmp.buffer, box.width(), box.height());
 	write_ppm(
 	        filename,
 	        first_tunnel->dbmp.buffer,
@@ -249,6 +266,8 @@ void discover(world &wrld)
 	        br,
 	        (size_t)3
         );
+
+//	delete first_tunnel;
 #endif
 }
 
@@ -266,9 +285,8 @@ load_world(char *input, FILE* config)
 	        &height,
 	        LOADBMP_RGB);
 
-    printf("Finished load into frame_buffer: %dx%d\n", width, height);
+    printf("Finished load into frame_buffer: %dx%d\n", height,width);
     assert(frame_buffer != nullptr);
-
 	auto *wrld = new world(frame_buffer, (size_t)height, (size_t)width);
 	discover(*wrld);
 
@@ -284,5 +302,6 @@ load_world(char *input, FILE* config)
 	        br,
 	        (size_t)3);
 	std::cout << "Discovered file: " << filename << std::endl;
+	delete wrld;
 #endif
 }
