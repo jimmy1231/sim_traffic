@@ -10,6 +10,7 @@
 #include <cstring>
 #include "prog.h"
 #include "rgb.h"
+#include "coords_t.h"
 
 class bitmap {
 public:
@@ -40,11 +41,12 @@ public:
      * Returns a direct reference of an 'rgb' struct in the
      * buffer location of 'row' and 'col'.
      */
-    rgb &get(const coords_t &coords);
-    void set(rgb &color, coords_t &coords);
-    void set(rgb &&color, coords_t &coords);
+    rgb & get(const coords_t &coords) const;
+    void set(rgb &color, coords_t &coords) const;
+    void set(rgb &&color, coords_t &coords) const;
     unsigned char& operator[](int index) const;
     unsigned char& operator[](size_t index) const;
+    rgb &operator[](const coords_t &coords) const;
 };
 
 

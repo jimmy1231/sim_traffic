@@ -16,6 +16,7 @@
 #include "rgb.h"
 #include "bitmap.h"
 #include "dbitmap.h"
+#include "coords_t.h"
 
 using namespace std;
 
@@ -42,18 +43,18 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	size_t channels)
 {
     std::cout << "writing to: " << output_file
-        << ", tl=(" << get_row(tl) << "," << get_col(tl) << "), "
-        << "br=("<< get_row(br) << "," << get_col(br) << "), "
+        << ", tl=(" << tl.row << "," << tl.col << "), "
+        << "br=("<< br.row << "," << br.col << "), "
         << std::endl;
 	assert(channels == 1 || channels == 3);
 
 	std::ofstream ofs;
 	ofs.open(output_file);
 
-	size_t ROW_LOWER = get<0>(tl);
-	size_t COL_LOWER = get<1>(tl);
-	size_t ROW_UPPER = get<0>(br);
-	size_t COL_UPPER = get<1>(br);
+	size_t ROW_LOWER = tl.row;
+	size_t COL_LOWER = tl.col;
+	size_t ROW_UPPER = br.row;
+	size_t COL_UPPER = br.col;
 
 	ofs << (channels > 1 ? "P3" : "P2") << std::endl;
 	ofs << (COL_UPPER-COL_LOWER+1) << " ";
@@ -79,8 +80,7 @@ void
 recursive_discover()
 {
     /*
-     *
-     */
+     * */
 
 }
 
@@ -90,8 +90,8 @@ bb get_bb(world &wrld, coords_t coords)
     Q.push(coords);
 
     size_t row_ul, col_ul, row_br, col_br;
-    row_ul = row_br = get_row(coords);
-    col_ul = col_br = get_col(coords);
+    row_ul = row_br = coords.row;
+    col_ul = col_br = coords.col;
 
     dbitmap &dbmp = wrld.get_dbmp();
     int mark_id = dbmp.mark();
@@ -99,8 +99,8 @@ bb get_bb(world &wrld, coords_t coords)
         coords_t _c = Q.front();
         Q.pop();
 
-        size_t _row = get_row(_c);
-        size_t _col = get_col(_c);
+        size_t _row = _c.row;
+        size_t _col = _c.col;
 
         /* Diagonal corners */
         row_ul = MIN(_row, row_ul);
@@ -109,24 +109,40 @@ bb get_bb(world &wrld, coords_t coords)
         col_br = MAX(_col, col_br);
 
         if (_row-1 >= 0) { // Up
-            _c = get_coords(_row-1, _col);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row-1, _col);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_row+1 < dbmp.height) { // Down
-            _c = get_coords(_row+1, _col);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row+1, _col);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_col-1 >= 0) { // Left
-            _c = get_coords(_row, _col-1);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row, _col-1);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_col+1 < dbmp.width) { // Right
-            _c = get_coords(_row, _col+1);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row, _col+1);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
     }
 
@@ -137,7 +153,7 @@ bb get_bb(world &wrld, coords_t coords)
 tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
 {
     queue<coords_t> Q;
-    coords_t _c = get_coords(row, col);
+    coords_t _c = coords_t(row, col);
     Q.push(_c);
 
     auto *t = new tunnel(get_bb(wrld, _c));
@@ -155,28 +171,44 @@ tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
         coords_t relative_coords = sim::relativize(t->box, _c);
         t->dbmp.set(CLR_TUNNEL, relative_coords);
 
-        size_t _row = get_row(_c);
-        size_t _col = get_col(_c);
+        size_t _row = _c.row;
+        size_t _col = _c.col;
 
         if (_row-1 >= 0) { // Up
-            _c = get_coords(_row-1, _col);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row-1, _col);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_row+1 < dbmp.height) { // Down
-            _c = get_coords(_row+1, _col);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row+1, _col);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_col-1 >= 0) { // Left
-            _c = get_coords(_row, _col-1);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row, _col-1);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
         if (_col+1 < dbmp.width) { // Right
-            _c = get_coords(_row, _col+1);
-            if (dbmp.set_visited(mark_id, CLR_TUNNEL, _c))
+            _c = coords_t(_row, _col+1);
+            rgb &pixel = dbmp[_c];
+            if (pixel == CLR_TUNNEL) {
+                dbmp.save(mark_id, pixel, _c);
+                pixel = CLR_DISCOVERY_VISITED;
                 Q.push(_c);
+            }
         }
     }
 
@@ -244,8 +276,8 @@ void discover(world &wrld)
 	bb &box = first_tunnel->box;
 	box.print();
 	string filename = "tunnel.ppm";
-	coords_t tl = get_coords(0, 0);
-    coords_t br = get_coords(box.height()-1, box.width()-1);
+	coords_t tl = coords_t(0, 0);
+    coords_t br = coords_t(box.height()-1, box.width()-1);
 	write_ppm(
 	        filename,
 	        first_tunnel->dbmp.buffer,
@@ -255,7 +287,7 @@ void discover(world &wrld)
 	        (size_t)3
         );
 
-//	delete first_tunnel;
+	delete first_tunnel;
 #endif
 }
 
@@ -280,8 +312,8 @@ load_world(char *input, FILE* config)
 
 #ifdef DEBUG
 	string filename = "discovered.ppm";
-	coords_t tl = make_tuple(0, 0);
-	coords_t br = make_tuple(height-1, width-1);
+	coords_t tl = coords_t(0, 0);
+	coords_t br = coords_t(height-1, width-1);
 	write_ppm(
 	        filename,
 	        frame_buffer,

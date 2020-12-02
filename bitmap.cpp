@@ -26,26 +26,28 @@ bitmap::~bitmap() {
     free(buffer);
 }
 
-rgb &bitmap::get(const coords_t &coords) {
-    size_t pos = (get_row(coords) * width + get_col(coords)) * 3;
+rgb & bitmap::get(const coords_t &coords) const {
+    size_t pos = (coords.row * width + coords.col) * 3;
     rgb *pixel = (rgb *) &(*this)[pos];
     return (*pixel);
 }
 
-void bitmap::set(rgb &color, coords_t &coords) {
+void bitmap::set(rgb &color, coords_t &coords) const {
     rgb &pixel = get(coords);
 
     // boundary check
     if ((void *) (&pixel + 1 /* sizeof(rgb) */) > (void *) (buffer + nbytes)) {
-        size_t pos = (std::get<0>(coords) * width + std::get<1>(coords)) * 3;
-        std::cout << "set &buffer[" << pos << "] = " << &pixel << ", &(coords) - (" << get_row(coords) << "," << get_col(coords) << "). "
-                  << &pixel << ". rgb=(" << (int)color.r << "," << (int)color.g << "," << (int)color.b << ")" << std::endl;
+        size_t pos = (coords.row * width + coords.col) * 3;
+        std::cout << "set &buffer[" << pos << "] = " << &pixel
+            << ", &(coords) - (" << coords.row << "," << coords.col << "). "
+            << &pixel << ". rgb=(" << (int)color.r << "," << (int)color.g << "," << (int)color.b << ")"
+            << std::endl;
         exit(EXIT_FAILURE);
     }
     pixel = color;
 }
 
-void bitmap::set(rgb &&color, coords_t &coords) {
+void bitmap::set(rgb &&color, coords_t &coords) const {
     rgb &pixel = get(coords);
     pixel = color;
 }
@@ -57,4 +59,8 @@ bitmap::bitmap(const bitmap &other) {
 
     buffer = (unsigned char *)malloc(nbytes);
     memcpy(buffer, other.buffer, nbytes);
+}
+
+rgb &bitmap::operator[](const coords_t &coords) const {
+    return get(coords);
 }

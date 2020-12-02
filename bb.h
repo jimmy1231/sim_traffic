@@ -10,7 +10,7 @@
 #include <iostream>
 #include "prog.h"
 #include "world.h"
-
+#include "coords_t.h"
 
 // bounding box, all bounds are exclusive
 class bb {
@@ -41,11 +41,10 @@ public:
 
 namespace sim {
     inline coords_t relativize(bb &box, coords_t coords) {
-        coords_t _c = get_coords(
-            MAX(get_row(coords)-box.row_ul, 0),
-            MAX(get_col(coords)-box.col_ul, 0)
+        return coords_t(
+            MAX(coords.row - box.row_ul, 0),
+            MAX(coords.col - box.col_ul, 0)
         );
-        return _c;
     }
 }
 

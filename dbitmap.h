@@ -7,14 +7,13 @@
 
 #include "prog.h"
 #include "bitmap.h"
+#include "coords_t.h"
 #include <unordered_map>
 #include <vector>
 
 typedef std::unordered_map<std::string, rgb> gridmap;
 class dbitmap : public bitmap {
     std::vector<gridmap> dbit_cache;
-
-    void track_pixel(int id, rgb &color, const coords_t &coords);
 
 public:
     dbitmap(size_t h, size_t w) : bitmap(h, w) { }
@@ -27,7 +26,7 @@ public:
     explicit dbitmap(bitmap &bmp) : bitmap(bmp.buffer, bmp.height, bmp.width) { }
     ~dbitmap();
 
-    bool set_visited(int id, rgb &color, const coords_t &coords);
+    void save(int id, rgb &color, const coords_t &coords);
     int mark();
     void reset(int id);
 };

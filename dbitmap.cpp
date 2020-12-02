@@ -5,23 +5,9 @@
 #include <cstdio>
 #include <iostream>
 #include <tuple>
-#include <memory>
 #include "dbitmap.h"
 #include "rgb.h"
 #include "prog.h"
-
-bool dbitmap::set_visited(int id, rgb &color, const coords_t &coords) {
-    rgb &pixel = this->get(coords);
-    if (pixel == color) {
-        track_pixel(id, pixel, coords);
-
-        coords_t cpy = coords;
-        set(CLR_DISCOVERY_VISITED, cpy);
-        return true;
-    }
-
-    return false;
-}
 
 int dbitmap::mark() {
     auto it = dbit_cache.begin();
@@ -56,20 +42,20 @@ void dbitmap::reset(int id) {
     }
 }
 
-void dbitmap::track_pixel(int id, rgb &color, const coords_t &coords) {
-    if (id < dbit_cache.size()) {
-        gridmap &cache = dbit_cache[id];
-
-        size_t row = std::get<0>(coords);
-        size_t col = std::get<1>(coords);
-        std::string key = std::to_string(row) + "-" + std::to_string(col);
-
-        cache[key] = color;
-    }
-}
-
 dbitmap::~dbitmap() {
     if (!dbit_cache.empty()) {
         dbit_cache.clear();
+    }
+}
+
+void dbitmap::save(int id, rgb &color, const coords_t &coords) {
+    if (id < dbit_cache.size()) {
+        gridmap &cache = dbit_cache[id];
+
+        size_t row = coords.row;
+        size_t col = coords.col;
+        std::string key = std::to_string(row) + "-" + std::to_string(col);
+
+        cache[key] = color;
     }
 }
