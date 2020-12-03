@@ -42,7 +42,7 @@ namespace sim {
     }
 
     // upper exclusive: lower <= val < upper
-    inline bool in_bounds(size_t val, size_t upper, size_t lower){
+    inline bool in_bounds(size_t val, size_t lower, size_t upper){
         return val >= lower && val < upper;
     }
 

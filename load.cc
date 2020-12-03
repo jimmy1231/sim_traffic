@@ -41,10 +41,12 @@ using namespace std;
  * @param channels number of channels (e.g. rgba=4, rgb=3)
  */
 void
-write_ppm(std::string &output_file, unsigned char *frame_buffer,
-	size_t width,
-	coords_t &tl, coords_t &br,
-	size_t channels)
+write_ppm(std::string &output_file,
+          unsigned char *frame_buffer,
+          size_t width,
+          coords_t &tl,
+          coords_t &br,
+          size_t channels)
 {
     std::cout << "writing to: " << output_file
         << ", tl=(" << tl.row << "," << tl.col << "), "
@@ -78,6 +80,14 @@ write_ppm(std::string &output_file, unsigned char *frame_buffer,
 	}
 
 	ofs.close();
+	std::cout << "done" << std::endl;
+}
+
+void
+write_bitmap(std::string output_file, bitmap &bmp) {
+    coords_t tl = coords_t(0, 0);
+    coords_t br = coords_t(bmp.height-1, bmp.width-1);
+    write_ppm(output_file, bmp.buffer, bmp.width, tl, br, 3);
 }
 
 void
@@ -165,7 +175,8 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
         default:
             return nullptr;
     }
-queue<coords_t> Q; Q.push(coords);
+
+    queue<coords_t> Q; Q.push(coords);
     std::cout << "discover entity"
         << ". type=" << ent->name()
         << ". bb_height=" << ent->box.height()
@@ -187,12 +198,17 @@ queue<coords_t> Q; Q.push(coords);
             }
     };
 
-    auto probe = [&wrld, &mark_id, &ent]
+    auto probe = [&Q, &wrld, &mark_id, &ent]
         (coords_t coords) -> void {
             dbitmap &dbmp = wrld.get_dbmp();
             if (sim::in_bounds(coords.row, 0, dbmp.height)
                 && sim::in_bounds(coords.col, 0, dbmp.width)) {
                 rgb &pixel = dbmp[coords];
+                if (pixel == CLR_DCURRENT) {
+                    pixel = CLR_DVISITED;
+                    Q.push(coords);
+                }
+
                 if (pixel != CLR_DCURRENT
                     && pixel != CLR_DVISITED
                     && pixel != CLR_WHITE) {
@@ -211,7 +227,7 @@ queue<coords_t> Q; Q.push(coords);
         coords_t curr_coords = Q.front();
         Q.pop();
         coords_t relative_coords = sim::relativize(ent->box, coords);
-        ent->dbmp[relative_coords] = CLR_TUNNEL;
+        ent->dbmp[relative_coords] = COLOR_;
 
         size_t row = curr_coords.row;
         size_t col = curr_coords.col;
@@ -226,7 +242,6 @@ queue<coords_t> Q; Q.push(coords);
     while (!Q.empty()) {
         coords_t curr_coords = Q.front();
         Q.pop();
-        wrld.get_dbmp()[curr_coords] = CLR_DVISITED;
 
         size_t row = curr_coords.row;
         size_t col = curr_coords.col;
@@ -297,24 +312,6 @@ void discover(world &wrld)
     std::cout << "seed coords: (" << row << "," << col << ")" << std::endl;
     recursive_discover(mark_id, wrld, coords_t(row, col));
     wrld.get_dbmp().reset(mark_id);
-
-//#ifdef DEBUG
-//	BB &box = first_tunnel->box;
-//	box.print();
-//	string filename = "tunnel.ppm";
-//	coords_t tl = coords_t(0, 0);
-//    coords_t br = coords_t(box.height()-1, box.width()-1);
-//	write_ppm(
-//	        filename,
-//	        first_tunnel->dbmp.buffer,
-//	        (size_t)first_tunnel->box.width(),
-//	        tl,
-//	        br,
-//	        (size_t)3
-//        );
-//
-//	delete first_tunnel;
-//#endif
 }
 
 void
@@ -338,16 +335,8 @@ load_world(char *input, FILE* config)
 
 #ifdef DEBUG
 	string filename = "discovered.ppm";
-	coords_t tl = coords_t(0, 0);
-	coords_t br = coords_t(height-1, width-1);
-	write_ppm(
-	        filename,
-	        frame_buffer,
-	        (size_t)width,
-	        tl,
-	        br,
-	        (size_t)3);
-	std::cout << "Discovered file: " << filename << std::endl;
+    std::cout << "Discovered file: " << filename << std::endl;
+	write_bitmap(filename, wrld->get_bmp());
 	delete wrld;
 #endif
 }

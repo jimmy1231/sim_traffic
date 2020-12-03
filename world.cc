@@ -10,7 +10,7 @@
 
 rgb CLR_TUNNEL = rgb(0, 128, 0);
 rgb CLR_STATION = rgb(0, 0, 0);
-rgb CLR_SPAWN_POINT = rgb(250, 0, 0);
+rgb CLR_SPAWN_POINT = rgb(224, 32, 64);
 rgb CLR_PLATFORM = rgb(255, 255, 0);
 rgb CLR_WHITE = rgb(255, 255, 255);
 rgb CLR_BLACK = rgb(0, 0, 0);
