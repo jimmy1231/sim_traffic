@@ -90,14 +90,6 @@ write_bitmap(std::string output_file, bitmap &bmp) {
     write_ppm(output_file, bmp.buffer, bmp.width, tl, br, 3);
 }
 
-void
-recursive_discover()
-{
-    /*
-     * */
-
-}
-
 BB get_bb(world &wrld, coords_t coords, rgb &COLOR_)
 {
     queue<coords_t> Q;
