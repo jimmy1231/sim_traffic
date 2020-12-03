@@ -1,5 +1,5 @@
 //
-// Created by jimmy on 2020-11-30.
+// Created by jimmy on 2020-12-03.
 //
 
 #include "tunnel.h"
@@ -7,7 +7,7 @@
 #include "platform.h"
 #include "spawn.h"
 
-void tunnel::link(entity *other) {
+void station::link(entity *other) {
     {
         auto *ptr = dynamic_cast<station *>(other);
         if (ptr != nullptr) {
@@ -37,6 +37,6 @@ void tunnel::link(entity *other) {
     }
 }
 
-inline std::string tunnel::name() {
-    return "tunnel";
+inline std::string station::name() {
+    return "station";
 }

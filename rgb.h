@@ -18,6 +18,7 @@ public:
 
     unsigned char average() const;
     bool operator==(const rgb &other) const;
+    bool operator!=(const rgb &other) const;
     rgb &operator=(const rgb &other);
 };
 

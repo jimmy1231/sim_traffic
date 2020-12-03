@@ -8,17 +8,16 @@
 
 #include "prog.h"
 #include "bitmap.h"
-#include "bb.h"
+#include "BB.h"
+#include "entity.h"
 
-class tunnel {
-
+class tunnel : public entity {
 public:
-    bb box;
-    dbitmap dbmp;
+    explicit tunnel(BB &&b) : entity(b) { }
+    explicit tunnel(BB &b) : entity(b) { }
 
-    explicit tunnel(bb &&b) :
-        box{b},
-        dbmp{b.height(), b.width()} { }
+    void link(entity *other) override;
+    inline std::string name() override;
 };
 
 

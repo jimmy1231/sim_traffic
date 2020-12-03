@@ -1,12 +1,21 @@
+#include <cstdio>
+
 #include "world.h"
 #include "prog.h"
 #include "rgb.h"
-#include <cstdio>
+#include "station.h"
+#include "platform.h"
+#include "spawn.h"
+#include "tunnel.h"
 
 rgb CLR_TUNNEL = rgb(0, 128, 0);
+rgb CLR_STATION = rgb(0, 0, 0);
+rgb CLR_SPAWN_POINT = rgb(250, 0, 0);
+rgb CLR_PLATFORM = rgb(255, 255, 0);
 rgb CLR_WHITE = rgb(255, 255, 255);
 rgb CLR_BLACK = rgb(0, 0, 0);
-rgb CLR_DISCOVERY_VISITED = rgb(164, 93, 193);
+rgb CLR_DVISITED = rgb(164, 93, 193);
+rgb CLR_DCURRENT = rgb(247, 199, 72);
 
 void
 print_world_raw(unsigned char* frame_buffer,
@@ -62,4 +71,34 @@ world::~world() {
 
 dbitmap &world::get_dbmp() {
     return dbmp;
+}
+
+void world::link(entity *ent) {
+    {
+        auto *ptr = dynamic_cast<station *>(ent);
+        if (ptr != nullptr) {
+            stations.push_back(ptr);
+        }
+    }
+
+    {
+        auto *ptr = dynamic_cast<platform *>(ent);
+        if (ptr != nullptr) {
+            platforms.push_back(ptr);
+        }
+    }
+
+    {
+        auto *ptr = dynamic_cast<tunnel *>(ent);
+        if (ptr != nullptr) {
+            tunnels.push_back(ptr);
+        }
+    }
+
+    {
+        auto *ptr = dynamic_cast<spawn *>(ent);
+        if (ptr != nullptr) {
+            spawns.push_back(ptr);
+        }
+    }
 }

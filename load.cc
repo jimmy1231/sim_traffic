@@ -11,12 +11,16 @@
 #include "loadbmp.h"
 #include "sim.h"
 #include "world.h"
-#include "bb.h"
-#include "tunnel.h"
+#include "BB.h"
 #include "rgb.h"
 #include "bitmap.h"
 #include "dbitmap.h"
 #include "coords_t.h"
+#include "entity.h"
+#include "tunnel.h"
+#include "station.h"
+#include "platform.h"
+#include "spawn.h"
 
 using namespace std;
 
@@ -84,7 +88,7 @@ recursive_discover()
 
 }
 
-bb get_bb(world &wrld, coords_t coords)
+BB get_bb(world &wrld, coords_t coords, rgb &COLOR_)
 {
     queue<coords_t> Q;
     Q.push(coords);
@@ -95,6 +99,20 @@ bb get_bb(world &wrld, coords_t coords)
 
     dbitmap &dbmp = wrld.get_dbmp();
     int mark_id = dbmp.mark();
+
+    auto set = [&Q, &dbmp, &mark_id]
+        (coords_t coords, rgb &color) -> void {
+            if (sim::in_bounds(coords.row, 0, dbmp.height)
+                && sim::in_bounds(coords.col, 0, dbmp.width)) {
+                rgb &pixel = dbmp[coords];
+                if (pixel == color) {
+                    dbmp.save(mark_id, pixel, coords);
+                    pixel = CLR_DVISITED;
+                    Q.push(coords);
+                }
+            }
+    };
+
     while (!Q.empty()) {
         coords_t _c = Q.front();
         Q.pop();
@@ -108,112 +126,118 @@ bb get_bb(world &wrld, coords_t coords)
         row_br = MAX(_row, row_br);
         col_br = MAX(_col, col_br);
 
-        if (_row-1 >= 0) { // Up
-            _c = coords_t(_row-1, _col);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_row+1 < dbmp.height) { // Down
-            _c = coords_t(_row+1, _col);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_col-1 >= 0) { // Left
-            _c = coords_t(_row, _col-1);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_col+1 < dbmp.width) { // Right
-            _c = coords_t(_row, _col+1);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
+        set(coords_t(_row-1, _col), COLOR_);
+        set(coords_t(_row+1, _col), COLOR_);
+        set(coords_t(_row, _col-1), COLOR_);
+        set(coords_t(_row, _col+1), COLOR_);
     }
 
     dbmp.reset(mark_id);
     return {row_ul, col_ul, row_br+1, col_br+1};
 }
 
-tunnel *discover_tunnel(world &wrld, size_t row, size_t col)
+entity *
+recursive_discover(int mark_id, world &wrld, const coords_t &coords)
 {
-    queue<coords_t> Q;
-    coords_t _c = coords_t(row, col);
-    Q.push(_c);
+    entity *ent = nullptr;
+    rgb COLOR_{};
+    switch (sim::enumerate(wrld.get_dbmp()[coords])) {
+        case TUNNEL:
+            COLOR_ = CLR_TUNNEL;
+            ent = new tunnel(get_bb(wrld, coords, COLOR_));
+            break;
 
-    auto *t = new tunnel(get_bb(wrld, _c));
-    std::cout << "discover tunnel"
-        << ". bb_height=" << t->box.height()
-        << ", bb_width=" << t->box.width()
-        << ", nbytes=" << t->dbmp.nbytes
+        case STATION:
+            COLOR_ = CLR_STATION;
+            ent = new station(get_bb(wrld, coords, COLOR_));
+            break;
+
+        case SPAWN_POINT:
+            COLOR_ = CLR_SPAWN_POINT;
+            ent = new spawn(get_bb(wrld, coords, COLOR_));
+            break;
+
+        case PLATFORM:
+            COLOR_ = CLR_PLATFORM;
+            ent = new spawn(get_bb(wrld, coords, COLOR_));
+            break;
+
+        default:
+            return nullptr;
+    }
+queue<coords_t> Q; Q.push(coords);
+    std::cout << "discover entity"
+        << ". type=" << ent->name()
+        << ". bb_height=" << ent->box.height()
+        << ", bb_width=" << ent->box.width()
+        << ", nbytes=" << ent->dbmp.nbytes
         << std::endl;
 
-    dbitmap &dbmp = wrld.get_dbmp();
-    int mark_id = dbmp.mark();
+    auto set = [&Q, &wrld, &mark_id]
+        (coords_t coords, rgb &color) -> void {
+            dbitmap &dbmp = wrld.get_dbmp();
+            if (sim::in_bounds(coords.row, 0, dbmp.height)
+                && sim::in_bounds(coords.col, 0, dbmp.width)) {
+                rgb &pixel = dbmp[coords];
+                if (pixel == color) {
+                    dbmp.save(mark_id, pixel, coords);
+                    pixel = CLR_DCURRENT;
+                    Q.push(coords);
+                }
+            }
+    };
+
+    auto probe = [&wrld, &mark_id, &ent]
+        (coords_t coords) -> void {
+            dbitmap &dbmp = wrld.get_dbmp();
+            if (sim::in_bounds(coords.row, 0, dbmp.height)
+                && sim::in_bounds(coords.col, 0, dbmp.width)) {
+                rgb &pixel = dbmp[coords];
+                if (pixel != CLR_DCURRENT
+                    && pixel != CLR_DVISITED
+                    && pixel != CLR_WHITE) {
+                    entity *ent_ = recursive_discover(mark_id, wrld, coords);
+                    if (ent_ != nullptr) {
+                        // bi-directional link
+                        ent->link(ent_);
+                        ent_->link(ent);
+                    }
+                }
+        }
+    };
+
+    // first pass: create entity
     while (!Q.empty()) {
-        _c = Q.front();
+        coords_t curr_coords = Q.front();
         Q.pop();
-        coords_t relative_coords = sim::relativize(t->box, _c);
-        t->dbmp[relative_coords] = CLR_TUNNEL;
+        coords_t relative_coords = sim::relativize(ent->box, coords);
+        ent->dbmp[relative_coords] = CLR_TUNNEL;
 
-        size_t _row = _c.row;
-        size_t _col = _c.col;
-
-        if (_row-1 >= 0) { // Up
-            _c = coords_t(_row-1, _col);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_row+1 < dbmp.height) { // Down
-            _c = coords_t(_row+1, _col);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_col-1 >= 0) { // Left
-            _c = coords_t(_row, _col-1);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
-        if (_col+1 < dbmp.width) { // Right
-            _c = coords_t(_row, _col+1);
-            rgb &pixel = dbmp[_c];
-            if (pixel == CLR_TUNNEL) {
-                dbmp.save(mark_id, pixel, _c);
-                pixel = CLR_DISCOVERY_VISITED;
-                Q.push(_c);
-            }
-        }
+        size_t row = curr_coords.row;
+        size_t col = curr_coords.col;
+        set(coords_t(row-1, col), COLOR_);
+        set(coords_t(row+1, col), COLOR_);
+        set(coords_t(row, col-1), COLOR_);
+        set(coords_t(row, col+1), COLOR_);
     }
 
-    dbmp.reset(mark_id);
-    return t;
+    // second pass: discover recursive options
+    Q.push(coords);
+    while (!Q.empty()) {
+        coords_t curr_coords = Q.front();
+        Q.pop();
+        wrld.get_dbmp()[curr_coords] = CLR_DVISITED;
+
+        size_t row = curr_coords.row;
+        size_t col = curr_coords.col;
+        probe(coords_t(row-1, col));
+        probe(coords_t(row+1, col));
+        probe(coords_t(row, col-1));
+        probe(coords_t(row, col+1));
+    }
+
+    wrld.link(ent);
+    return ent;
 }
 
 /**
@@ -269,26 +293,28 @@ void discover(world &wrld)
 	 * Upper-left	: row_ul, col_ul
 	 * Bottom-right	: row_br, col_br
 	 */
-	std::cout << "first tunnel starts: (" << row << "," << col << ")" << std::endl;
-	tunnel *first_tunnel = discover_tunnel(wrld, row, col);
+    int mark_id = wrld.get_dbmp().mark();
+    std::cout << "seed coords: (" << row << "," << col << ")" << std::endl;
+    recursive_discover(mark_id, wrld, coords_t(row, col));
+    wrld.get_dbmp().reset(mark_id);
 
-#ifdef DEBUG
-	bb &box = first_tunnel->box;
-	box.print();
-	string filename = "tunnel.ppm";
-	coords_t tl = coords_t(0, 0);
-    coords_t br = coords_t(box.height()-1, box.width()-1);
-	write_ppm(
-	        filename,
-	        first_tunnel->dbmp.buffer,
-	        (size_t)first_tunnel->box.width(),
-	        tl,
-	        br,
-	        (size_t)3
-        );
-
-	delete first_tunnel;
-#endif
+//#ifdef DEBUG
+//	BB &box = first_tunnel->box;
+//	box.print();
+//	string filename = "tunnel.ppm";
+//	coords_t tl = coords_t(0, 0);
+//    coords_t br = coords_t(box.height()-1, box.width()-1);
+//	write_ppm(
+//	        filename,
+//	        first_tunnel->dbmp.buffer,
+//	        (size_t)first_tunnel->box.width(),
+//	        tl,
+//	        br,
+//	        (size_t)3
+//        );
+//
+//	delete first_tunnel;
+//#endif
 }
 
 void

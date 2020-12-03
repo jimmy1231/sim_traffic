@@ -3,11 +3,18 @@
 
 #include <cstdio>
 #include <tuple>
+#include <vector>
 #include <memory>
+
 #include "prog.h"
 #include "rgb.h"
 #include "bitmap.h"
 #include "dbitmap.h"
+#include "entity.h"
+#include "station.h"
+#include "platform.h"
+#include "spawn.h"
+#include "tunnel.h"
 
 /**
  * Prints the raw world - basically a parsed bitmap
@@ -22,11 +29,17 @@ void print_bmp(unsigned char* frame_buffer, unsigned int width, unsigned int hei
 class world {
     dbitmap dbmp;
 public:
+    std::vector<tunnel *> tunnels;
+    std::vector<station *> stations;
+    std::vector<platform *> platforms;
+    std::vector<spawn *> spawns;
+
     world(unsigned char *b, size_t h, size_t w) : dbmp{b, h, w} { }
     ~world();
 
     bitmap &get_bmp();
     dbitmap &get_dbmp();
+    void link(entity *ent);
 };
 
 #endif //SIM_TRAFFIC_WORLD_H

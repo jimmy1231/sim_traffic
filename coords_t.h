@@ -5,8 +5,6 @@
 #ifndef SIM_TRAFFIC_COORDS_T_H
 #define SIM_TRAFFIC_COORDS_T_H
 
-#include "prog.h"
-
 class coords_t {
 public:
     size_t row;

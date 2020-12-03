@@ -3,23 +3,23 @@
 //
 
 #include <cstdio>
-#include "bb.h"
+#include "BB.h"
 
-void bb::print() const {
+void BB::print() const {
     printf("UpLeft: (%d, %d); BottomRight: (%d, %d)\n",
            (int)row_ul, (int)col_ul,
            (int)row_br, (int)col_br);
 }
 
-size_t bb::height() const {
+size_t BB::height() const {
     return row_br - row_ul;
 }
 
-size_t bb::width() const {
+size_t BB::width() const {
     return col_br - col_ul;
 }
 
-bb &bb::operator=(const bb &other) {
+BB &BB::operator=(const BB &other) {
     row_ul = other.row_ul;
     col_ul = other.col_ul;
     row_br = other.row_br;
@@ -27,14 +27,14 @@ bb &bb::operator=(const bb &other) {
     return (*this);
 }
 
-coords_t bb::top_left() const {
+coords_t BB::top_left() const {
     return coords_t(row_ul, col_ul);
 }
 
-coords_t bb::bot_right() const {
+coords_t BB::bot_right() const {
     return coords_t(row_br, col_br);
 }
 
-size_t bb::size() const {
+size_t BB::size() const {
     return height() * width();
 }

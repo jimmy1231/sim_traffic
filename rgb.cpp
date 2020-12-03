@@ -19,3 +19,7 @@ rgb &rgb::operator=(const rgb &other) {
 unsigned char rgb::average() const {
     return (unsigned char) ((float)r + (float)g + (float)b / 3);
 }
+
+bool rgb::operator!=(const rgb &other) const {
+    return !((*this) == other);
+}
