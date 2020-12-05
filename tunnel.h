@@ -13,8 +13,8 @@
 
 class tunnel : public entity {
 public:
-    explicit tunnel(BB &&b) : entity(b) { }
-    explicit tunnel(BB &b) : entity(b) { }
+    explicit tunnel(BB &&b) : entity(b, CLR_TUNNEL) { }
+    explicit tunnel(BB &b) : entity(b, CLR_TUNNEL) { }
 
     void link(entity *other) override;
     inline std::string name() override;

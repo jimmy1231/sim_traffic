@@ -12,8 +12,8 @@
 
 class spawn : public entity {
 public:
-    explicit spawn(BB &&b) : entity(b) { }
-    explicit spawn(BB &b) : entity(b) { }
+    explicit spawn(BB &&b) : entity(b, CLR_SPAWN_POINT) { }
+    explicit spawn(BB &b) : entity(b, CLR_SPAWN_POINT) { }
 
     void link(entity *other) override;
     inline std::string name() override;

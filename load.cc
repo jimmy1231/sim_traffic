@@ -168,7 +168,8 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
             return nullptr;
     }
 
-    queue<coords_t> Q; Q.push(coords);
+    queue<coords_t> Q;
+    Q.push(coords);
     std::cout << "discover entity"
         << ". type=" << ent->name()
         << ". bb_height=" << ent->box.height()

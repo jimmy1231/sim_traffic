@@ -37,6 +37,7 @@ public:
     world(unsigned char *b, size_t h, size_t w) : dbmp{b, h, w} { }
     ~world();
 
+    void copy_from(entity &entity);
     bitmap &get_bmp();
     dbitmap &get_dbmp();
     void link(entity *ent);

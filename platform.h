@@ -12,8 +12,8 @@
 
 class platform : public entity {
 public:
-    explicit platform(BB &b) : entity(b) { }
-    explicit platform(BB &&b) : entity(b) { }
+    explicit platform(BB &b) : entity(b, CLR_PLATFORM) { }
+    explicit platform(BB &&b) : entity(b, CLR_PLATFORM) { }
 
     void link(entity *other) override;
     inline std::string name() override;

@@ -1,5 +1,7 @@
 #include <cstdio>
 
+#include <queue>
+
 #include "world.h"
 #include "prog.h"
 #include "rgb.h"
@@ -101,4 +103,68 @@ void world::link(entity *ent) {
             spawns.push_back(ptr);
         }
     }
+}
+
+void world::copy_from(entity &entity) {
+    BB &ent_box = entity.box;
+    dbitmap &ent_dbmp = entity.dbmp;
+    coords_t initial_coords{};
+    bool found = false;
+    for (int row = 0; row < ent_box.height(); ++row) {
+        for (int col = 0; col < ent_box.width(); ++col) {
+            coords_t coords = coords_t(row, col);
+            if (ent_dbmp[coords] != CLR_WHITE) {
+                initial_coords = coords;
+                found = true;
+                break;
+            }
+        }
+        if (found) {
+            break;
+        }
+    }
+
+    if (!found) {
+        return;
+    }
+
+    std::queue<coords_t> Q;
+    Q.push(initial_coords);
+    int mark_id = ent_dbmp.mark();
+
+    /*
+     * Sets world bitmap pixel to whatever color was
+     * in the entity bitmap - Need to make entity
+     * bitmap coords absolute.
+     */
+    dbitmap &this_dbmp = dbmp;
+    auto set = [&ent_box, &ent_dbmp, &this_dbmp, &mark_id, &Q]
+        (coords_t coords) -> void {
+            if (sim::in_bounds(coords.row, 0, ent_box.height())
+                && sim::in_bounds(coords.col, 0, ent_box.width())) {
+                rgb &pixel = ent_dbmp[coords];
+                if (pixel != CLR_WHITE) {
+                    coords_t abs_coords = sim::absolute(ent_box, coords);
+                    this_dbmp[abs_coords] = pixel;
+
+                    ent_dbmp.save(mark_id, pixel, coords);
+                    ent_dbmp[coords] = CLR_DVISITED;
+                    Q.push(coords);
+                }
+            }
+    };
+
+    while (!Q.empty()) {
+        coords_t &coords = Q.front();
+        Q.pop();
+
+        size_t row = coords.row;
+        size_t col = coords.col;
+        set(coords_t(row-1, col));
+        set(coords_t(row+1, col));
+        set(coords_t(row, col-1));
+        set(coords_t(row, col+1));
+    }
+
+    ent_dbmp.reset(mark_id);
 }

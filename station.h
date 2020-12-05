@@ -12,8 +12,8 @@
 
 class station : public entity {
 public:
-    explicit station(BB &&b) : entity(b) { }
-    explicit station(BB &b) : entity(b) { }
+    explicit station(BB &&b) : entity(b, CLR_STATION) { }
+    explicit station(BB &b) : entity(b, CLR_STATION) { }
 
     void link(entity *other) override;
     inline std::string name() override;

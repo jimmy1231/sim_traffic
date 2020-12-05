@@ -41,6 +41,14 @@ namespace sim {
         };
     }
 
+    // inverse of relativize
+    inline coords_t absolute(BB &box, coords_t coords) {
+        return {
+            MIN(coords.row + box.row_ul, box.height()),
+            MIN(coords.col + box.col_ul, box.width())
+        };
+    }
+
     // upper exclusive: lower <= val < upper
     inline bool in_bounds(size_t val, size_t lower, size_t upper){
         return val >= lower && val < upper;
