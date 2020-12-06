@@ -30,6 +30,9 @@ class platform;
 class spawn;
 class station;
 
+// comment to enable assert
+#define NDEBUG
+
 enum rgb_enum {
     TUNNEL,
     STATION,
