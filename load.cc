@@ -243,6 +243,13 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
         probe(coords_t(row, col+1));
     }
 
+    /*
+     * 3rd pass to finally recursively discover. At
+     * this point, the current (and all previously
+     * processed entities) should be shaded
+     * CLR_DVISITED, which allows the recursive
+     * call to be bounded by its color.
+     */
     auto it = unfinished.begin();
     for (; it != unfinished.end(); ++it) {
         coords_t coords_ = (*it);
