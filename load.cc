@@ -140,7 +140,9 @@ BB get_bb(world &wrld, coords_t coords, rgb &COLOR_)
 }
 
 entity *
-recursive_discover(int mark_id, world &wrld, const coords_t &coords)
+recursive_discover(int mark_id,
+                   world &wrld,
+                   const coords_t &coords)
 {
     entity *ent = nullptr;
     rgb COLOR_{};
