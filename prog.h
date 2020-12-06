@@ -24,6 +24,12 @@ extern rgb CLR_DCURRENT;
 #define MAX(s1, s2) (s1) > (s2) ? (s1) : (s2)
 #define MIN(s1, s2) (s1) < (s2) ? (s1) : (s2)
 
+class entity;
+class tunnel;
+class platform;
+class spawn;
+class station;
+
 enum rgb_enum {
     TUNNEL,
     STATION,

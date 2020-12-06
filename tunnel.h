@@ -10,8 +10,11 @@
 #include "bitmap.h"
 #include "BB.h"
 #include "entity.h"
+#include "platform.h"
 
 class tunnel : public entity {
+    platform *platform1 = nullptr;
+    platform *platform2 = nullptr;
 public:
     explicit tunnel(BB &&b) : entity(b, CLR_TUNNEL) { }
     explicit tunnel(BB &b) : entity(b, CLR_TUNNEL) { }

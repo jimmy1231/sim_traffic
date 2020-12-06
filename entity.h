@@ -5,6 +5,7 @@
 #ifndef SIM_TRAFFIC_ENTITY_H
 #define SIM_TRAFFIC_ENTITY_H
 
+#include <iostream>
 #include <string>
 
 #include "prog.h"
@@ -22,6 +23,10 @@ public:
     virtual void link(entity *other) = 0;
     virtual std::string name() = 0;
 };
+
+inline void warn_illegal_link(entity *ent, entity *other) {
+    std::cout << "WARNING: Illegal link, " << ent->name() << " -> " << other->name() << std::endl;
+}
 
 
 #endif //SIM_TRAFFIC_ENTITY_H

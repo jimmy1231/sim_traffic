@@ -3,6 +3,7 @@
 //
 
 #include "rgb.h"
+#include <sstream>
 
 bool rgb::operator==(const rgb &other) const {
     return r == other.r && g == other.g && b == other.b;
@@ -22,4 +23,10 @@ unsigned char rgb::average() const {
 
 bool rgb::operator!=(const rgb &other) const {
     return !((*this) == other);
+}
+
+std::string rgb::str() const {
+    std::stringstream sstream;
+    sstream << "(" << r << "," << b << "," << g << ")";
+    return sstream.str();
 }

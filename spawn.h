@@ -9,8 +9,10 @@
 
 #include "entity.h"
 #include "BB.h"
+#include "station.h"
 
 class spawn : public entity {
+    station *station_ = nullptr;
 public:
     explicit spawn(BB &&b) : entity(b, CLR_SPAWN_POINT) { }
     explicit spawn(BB &b) : entity(b, CLR_SPAWN_POINT) { }

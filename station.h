@@ -6,11 +6,14 @@
 #define SIM_TRAFFIC_STATION_H
 
 #include <string>
+#include <vector>
 
 #include "entity.h"
 #include "BB.h"
 
 class station : public entity {
+    std::vector<platform *> platforms;
+    std::vector<spawn *> spawns;
 public:
     explicit station(BB &&b) : entity(b, CLR_STATION) { }
     explicit station(BB &b) : entity(b, CLR_STATION) { }

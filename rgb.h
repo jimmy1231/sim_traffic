@@ -5,6 +5,7 @@
 #ifndef SIM_TRAFFIC_RGB_H
 #define SIM_TRAFFIC_RGB_H
 
+#include <string>
 
 class rgb {
 public:
@@ -16,6 +17,7 @@ public:
         : r{r}, g{g}, b{b}
         { }
 
+    std::string str() const;
     unsigned char average() const;
     bool operator==(const rgb &other) const;
     bool operator!=(const rgb &other) const;

@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 #include <queue>
+#include <set>
 
 #include "load.h"
 #include "prog.h"
@@ -102,12 +103,12 @@ BB get_bb(world &wrld, coords_t coords, rgb &COLOR_)
     dbitmap &dbmp = wrld.get_dbmp();
     int mark_id = dbmp.mark();
 
-    auto set = [&Q, &dbmp, &mark_id]
-        (coords_t coords, rgb &color) -> void {
+    auto set = [&Q, &dbmp, &mark_id, &COLOR_]
+        (coords_t coords) -> void {
             if (sim::in_bounds(coords.row, 0, dbmp.height)
                 && sim::in_bounds(coords.col, 0, dbmp.width)) {
                 rgb &pixel = dbmp[coords];
-                if (pixel == color) {
+                if (pixel == COLOR_) {
                     dbmp.save(mark_id, pixel, coords);
                     pixel = CLR_DVISITED;
                     Q.push(coords);
@@ -128,10 +129,10 @@ BB get_bb(world &wrld, coords_t coords, rgb &COLOR_)
         row_br = MAX(_row, row_br);
         col_br = MAX(_col, col_br);
 
-        set(coords_t(_row-1, _col), COLOR_);
-        set(coords_t(_row+1, _col), COLOR_);
-        set(coords_t(_row, _col-1), COLOR_);
-        set(coords_t(_row, _col+1), COLOR_);
+        set(coords_t(_row-1, _col));
+        set(coords_t(_row+1, _col));
+        set(coords_t(_row, _col-1));
+        set(coords_t(_row, _col+1));
     }
 
     dbmp.reset(mark_id);
@@ -161,7 +162,7 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
 
         case PLATFORM:
             COLOR_ = CLR_PLATFORM;
-            ent = new spawn(get_bb(wrld, coords, COLOR_));
+            ent = new platform(get_bb(wrld, coords, COLOR_));
             break;
 
         default:
@@ -175,6 +176,8 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
         << ". bb_height=" << ent->box.height()
         << ", bb_width=" << ent->box.width()
         << ", nbytes=" << ent->dbmp.nbytes
+        << ", tl=" << ent->box.top_left().str()
+        << ", br=" << ent->box.bot_right().str()
         << std::endl;
 
     auto set = [&Q, &wrld, &mark_id]
@@ -189,30 +192,6 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
                     Q.push(coords);
                 }
             }
-    };
-
-    auto probe = [&Q, &wrld, &mark_id, &ent]
-        (coords_t coords) -> void {
-            dbitmap &dbmp = wrld.get_dbmp();
-            if (sim::in_bounds(coords.row, 0, dbmp.height)
-                && sim::in_bounds(coords.col, 0, dbmp.width)) {
-                rgb &pixel = dbmp[coords];
-                if (pixel == CLR_DCURRENT) {
-                    pixel = CLR_DVISITED;
-                    Q.push(coords);
-                }
-
-                if (pixel != CLR_DCURRENT
-                    && pixel != CLR_DVISITED
-                    && pixel != CLR_WHITE) {
-                    entity *ent_ = recursive_discover(mark_id, wrld, coords);
-                    if (ent_ != nullptr) {
-                        // bi-directional link
-                        ent->link(ent_);
-                        ent_->link(ent);
-                    }
-                }
-        }
     };
 
     // first pass: create entity
@@ -230,6 +209,26 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
         set(coords_t(row, col+1), COLOR_);
     }
 
+    std::set<coords_t> unfinished;
+    auto probe = [&Q, &wrld, &mark_id, &ent, &unfinished]
+        (coords_t coords) -> void {
+        dbitmap &dbmp = wrld.get_dbmp();
+        if (sim::in_bounds(coords.row, 0, dbmp.height)
+            && sim::in_bounds(coords.col, 0, dbmp.width)) {
+            rgb &pixel = dbmp[coords];
+            if (pixel == CLR_DCURRENT) {
+                pixel = CLR_DVISITED;
+                Q.push(coords);
+            }
+
+            if (pixel != CLR_DCURRENT
+                && pixel != CLR_DVISITED
+                && pixel != CLR_WHITE) {
+                unfinished.insert(coords);
+            }
+        }
+    };
+
     // second pass: discover recursive options
     Q.push(coords);
     while (!Q.empty()) {
@@ -242,6 +241,19 @@ recursive_discover(int mark_id, world &wrld, const coords_t &coords)
         probe(coords_t(row+1, col));
         probe(coords_t(row, col-1));
         probe(coords_t(row, col+1));
+    }
+
+    auto it = unfinished.begin();
+    for (; it != unfinished.end(); ++it) {
+        coords_t coords_ = (*it);
+        if (wrld.get_dbmp()[coords_] != CLR_DVISITED) {
+            entity *ent_ = recursive_discover(mark_id, wrld, coords_);
+            if (ent_) {
+                // bi-directional link
+                ent->link(ent_);
+                ent_->link(ent);
+            }
+        }
     }
 
     wrld.link(ent);

@@ -7,10 +7,13 @@
 
 #include <string>
 
+#include "prog.h"
 #include "entity.h"
 #include "BB.h"
 
 class platform : public entity {
+    tunnel *tunnel_ = nullptr;
+    station *station_ = nullptr;
 public:
     explicit platform(BB &b) : entity(b, CLR_PLATFORM) { }
     explicit platform(BB &&b) : entity(b, CLR_PLATFORM) { }

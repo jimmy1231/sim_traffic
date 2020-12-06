@@ -2,6 +2,9 @@
 // Created by jimmy on 2020-12-03.
 //
 
+#include <sstream>
+#include <string>
+
 #include "tunnel.h"
 #include "station.h"
 #include "platform.h"
@@ -11,32 +14,38 @@ void station::link(entity *other) {
     {
         auto *ptr = dynamic_cast<station *>(other);
         if (ptr != nullptr) {
-            // TODO
+            warn_illegal_link(this, other);
+            return;
         }
     }
 
     {
         auto *ptr = dynamic_cast<platform *>(other);
         if (ptr != nullptr) {
-            // TODO
+            platforms.push_back(ptr);
+            return;
         }
     }
 
     {
         auto *ptr = dynamic_cast<tunnel *>(other);
         if (ptr != nullptr) {
-            // TODO
+            warn_illegal_link(this, other);
+            return;
         }
     }
 
     {
         auto *ptr = dynamic_cast<spawn *>(other);
         if (ptr != nullptr) {
-            // TODO
+            spawns.push_back(ptr);
+            return;
         }
     }
 }
 
 inline std::string station::name() {
-    return "station";
+    std::stringstream sstream;
+    sstream << "station" << box.top_left().str();
+    return sstream.str();
 }
