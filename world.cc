@@ -168,3 +168,15 @@ void world::copy_from(entity &entity) {
 
     ent_dbmp.reset(mark_id);
 }
+
+void world::calibrate() {
+    /*
+     * For each platform, compute the shortest path
+     * to all other platforms; cache only the next
+     * hop one would take to reach their destination,
+     * as well as the weight of the complete shortest
+     * path.
+     *
+     * This for use during the simulation.
+     */
+}
